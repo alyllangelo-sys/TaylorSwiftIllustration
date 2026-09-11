@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>invisible string — folklore scrapbook</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ==========================================
+           RESET & GLOBAL STYLES
+           ========================================== */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+
+        body {
+            background-color: #f3eee6;
+            background-image: 
+                radial-gradient(ellipse at center, rgba(255,255,255,0.4) 0%, rgba(220,210,195,0.4) 100%),
+                url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+            color: #3c322a;
+            font-family: 'Libre Baskerville', Georgia, serif;
+            line-height: 1.85;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Continuous SVG String Layer */
+        #string-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        /* Aged Page Vignette & Grain Overlay */
+        .page-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            box-shadow: inset 0 0 100px rgba(70, 50, 30, 0.18);
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        /* Typography Defaults */
+        h1, h2, h3, h4 {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            color: #2c221a;
+        }
+
+        .handwritten {
+            font-family: 'Alex Brush', cursive;
+            color: #8b3a3a;
+            font-size: 1.8rem;
+            line-height: 1.2;
+            display: inline-block;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* ==========================================
+           NAVIGATION BAR
+           ========================================== */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            background: rgba(243, 238, 230, 0.92);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(180, 160, 135, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        nav {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.2rem 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2.8rem;
+        }
+
+        .nav-links a {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: #5a4b3c;
+            position: relative;
+            padding: 0.3rem 0;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 1px;
+            background: #a84232;
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .nav-links a:hover {
+            color: #8b3a3a;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* ==========================================
+           SCRAPBOOK DECORATIONS (Washi Tape, Leaves, Frames)
+           ========================================== */
+        .washi-tape {
+            position: absolute;
+            height: 26px;
+            width: 110px;
+            background: rgba(215, 202, 180, 0.65);
+            border-left: 2px dashed rgba(160, 140, 110, 0.4);
+            border-right: 2px dashed rgba(160, 140, 110, 0.4);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        .washi-tape.top-left {
+            top: -12px;
+            left: 20px;
+            transform: rotate(-4deg);
+        }
+
+        .washi-tape.top-right {
+            top: -12px;
+            right: 20px;
+            transform: rotate(3deg);
+        }
+
+        .pressed-leaf {
+            position: absolute;
+            opacity: 0.25;
+            pointer-events: none;
+            filter: sepia(0.6) hue-rotate(40deg);
+        }
+
+        .scrapbook-card {
+            background: #fbf7f0;
+            border: 1px solid #e2d7c5;
+            box-shadow: 3px 6px 18px rgba(60, 45, 30, 0.07), inset 0 0 30px rgba(230, 220, 200, 0.25);
+            padding: 2.5rem;
+            position: relative;
+            border-radius: 2px;
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .scrapbook-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 4px 10px 25px rgba(60, 45, 30, 0.1);
+        }
+
+        /* Taylor Swift Photo Frame Styling */
+        .ts-photo-frame {
+            background: #fff;
+            padding: 12px 12px 45px 12px;
+            box-shadow: 2px 4px 12px rgba(40, 30, 20, 0.15);
+            border: 1px solid #eae2d6;
+            transform: rotate(-1.5deg);
+            display: inline-block;
+            position: relative;
+            max-width: 100%;
+        }
+
+        .ts-photo-frame img {
+            width: 100%;
+            height: auto;
+            display: block;
+            filter: sepia(0.2) contrast(0.95) brightness(0.98);
+        }
+
+        .ts-photo-frame .caption {
+            position: absolute;
+            bottom: 12px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-family: 'Alex Brush', cursive;
+            font-size: 1.4rem;
+            color: #554433;
+        }
+
+        /* ==========================================
+           SECTION COMMON STYLES
+           ========================================== */
+        section {
+            padding: 7rem 2rem 5rem 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 3;
+        }
+
+        .section-title {
+            font-size: 2.8rem;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            color: #2c221a;
+            position: relative;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-family: 'Alex Brush', cursive;
+            font-size: 2rem;
+            color: #8b3a3a;
+            margin-bottom: 3.5rem;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #c5a059, transparent);
+            margin: 3rem auto;
+            width: 60%;
+        }
+
+        /* ==========================================
+           1. HOME SECTION
+           ========================================== */
+        #home {
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding-top: 8rem;
+        }
+
+        .home-title {
+            font-size: 4.5rem;
+            letter-spacing: 0.18em;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            color: #241c15;
+            text-shadow: 1px 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .home-tagline {
+            font-family: 'Alex Brush', cursive;
+            font-size: 2.4rem;
+            color: #8b3a3a;
+            margin-bottom: 2rem;
+        }
+
+        .home-intro {
+            max-width: 680px;
+            font-size: 1.1rem;
+            color: #4a3e34;
+            font-style: italic;
+            margin-bottom: 3.5rem;
+            line-height: 1.9;
+        }
+
+        .hero-centerpiece {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            margin-top: 1rem;
+            align-items: center;
+        }
+
+        /* ==========================================
+           2. THE SONG SECTION
+           ========================================== */
+        .song-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.8fr;
+            gap: 2.5rem;
+            align-items: start;
+        }
+
+        @media (max-width: 768px) {
+            .song-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .song-meta-box {
+            background: #f7f2ea;
+            border: 1px dashed #c0b09d;
+            padding: 1.8rem;
+            border-radius: 2px;
+        }
+
+        .song-meta-box h3 {
+            font-size: 1.6rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #d8ccbb;
+            padding-bottom: 0.5rem;
+        }
+
+        .song-meta-item {
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+        }
+
+        .song-meta-item strong {
+            color: #5c4a3b;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+        }
+
+        .audio-player-card {
+            margin-top: 1.8rem;
+            background: #ebdcc9;
+            padding: 1.2rem;
+            border: 1px solid #d0beaa;
+            border-radius: 4px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.04);
+        }
+
+        .audio-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .play-btn {
+            background: #8b3a3a;
+            color: #fbf7f0;
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: background 0.3s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        .play-btn:hover {
+            background: #6a2a2a;
+        }
+
+        .track-info {
+            flex-grow: 1;
+        }
+
+        .track-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .time-slider {
+            width: 100%;
+            height: 4px;
+            accent-color: #8b3a3a;
+            cursor: pointer;
+        }
+
+        .spotify-card {
+            margin-top: 1.5rem;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        /* Timeline PAST -> PRESENT */
+        .visual-timeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 3.5rem;
+            position: relative;
+            padding: 2rem 0;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .timeline-step {
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .timeline-node {
+            width: 65px;
+            height: 65px;
+            background: #fdfaf5;
+            border: 2px solid #8b3a3a;
+            border-radius: 50%;
+            margin: 0 auto 0.8rem auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 700;
+            font-size: 1.2rem;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+            color: #4a382a;
+        }
+
+        .timeline-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #6b5a4b;
+            font-weight: bold;
+        }
+
+        /* ==========================================
+           3. THE STRING SECTION
+           ========================================== */
+        .quote-banner {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: rgba(235, 225, 210, 0.4);
+            border-top: 1px solid #d8caa7;
+            border-bottom: 1px solid #d8caa7;
+            margin: 3rem 0;
+            position: relative;
+        }
+
+        .quote-banner blockquote {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.2rem;
+            font-style: italic;
+            color: #2c2016;
+            line-height: 1.4;
+        }
+
+        .string-prose p {
+            margin-bottom: 1.8rem;
+            text-align: justify;
+            text-justify: inter-word;
+            font-size: 1.02rem;
+            color: #382e25;
+        }
+
+        /* ==========================================
+           4. LYRIC METAPHORS SECTION
+           ========================================== */
+        .metaphor-card {
+            background: #fcf9f2;
+            border-left: 4px solid #8b3a3a;
+            padding: 2rem 2.2rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 2px 4px 15px rgba(50,40,30,0.05);
+            position: relative;
+        }
+
+        .lyric-excerpt {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.6rem;
+            font-style: italic;
+            color: #8b3a3a;
+            margin-bottom: 1rem;
+            line-height: 1.4;
+        }
+
+        .metaphor-analysis {
+            font-size: 0.98rem;
+            color: #42362b;
+            line-height: 1.8;
+        }
+
+        .bigger-meaning-card {
+            background: #f4eae0;
+            border: 2px dashed #b89878;
+            padding: 2.5rem;
+            margin-top: 3rem;
+            position: relative;
+        }
+
+        .bigger-meaning-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: #3b2a1d;
+            text-align: center;
+            letter-spacing: 0.1em;
+        }
+
+        /* ==========================================
+           5. ABOUT SECTION
+           ========================================== */
+        .about-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fdfaf4;
+            padding: 3.5rem 3rem;
+            border: 1px solid #e5d9c7;
+            box-shadow: 0 8px 30px rgba(50,40,30,0.06);
+            position: relative;
+        }
+
+        .about-text p {
+            margin-bottom: 1.8rem;
+            font-size: 1.05rem;
+            line-height: 1.9;
+            color: #3a2e24;
+        }
+
+        /* ==========================================
+           6. LEARN MORE SECTION
+           ========================================== */
+        .learn-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .interactive-poll {
+            background: #f5ebe0;
+            border: 1px solid #d8c8b4;
+            padding: 2rem;
+            text-align: center;
+            border-radius: 4px;
+        }
+
+        .poll-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            margin-top: 1.5rem;
+        }
+
+        .poll-btn {
+            background: #fdfaf4;
+            border: 1px solid #a89278;
+            padding: 0.8rem 1.2rem;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #4a3a2c;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.05em;
+        }
+
+        .poll-btn:hover {
+            background: #8b3a3a;
+            color: #fff;
+            border-color: #8b3a3a;
+        }
+
+        .poll-result {
+            margin-top: 1.2rem;
+            font-style: italic;
+            font-size: 0.95rem;
+            color: #6a2a2a;
+            display: none;
+        }
+
+        .journal-entries {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .journal-card {
+            background: #fbf7f0;
+            border: 1px solid #e0d2c0;
+            padding: 1.5rem;
+            position: relative;
+            transform: rotate(0.5deg);
+        }
+
+        .journal-card:nth-child(even) {
+            transform: rotate(-0.8deg);
+        }
+
+        .journal-card p {
+            font-size: 0.95rem;
+            font-style: italic;
+            color: #4a3e33;
+            margin-bottom: 0.8rem;
+        }
+
+        .journal-author {
+            font-family: 'Alex Brush', cursive;
+            font-size: 1.4rem;
+            color: #8b3a3a;
+            text-align: right;
+        }
+
+        /* Thread Journey Flow */
+        .thread-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f3e9dc;
+            padding: 1.5rem;
+            border: 1px solid #d5c4af;
+            border-radius: 4px;
+            margin-top: 2.5rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .thread-node {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #5a4838;
+            letter-spacing: 0.08em;
+        }
+
+        .thread-arrow {
+            color: #b84a39;
+            font-weight: bold;
+        }
+
+        /* ==========================================
+           FOOTER
+           ========================================== */
+        footer {
+            text-align: center;
+            padding: 3rem 1rem;
+            border-top: 1px solid #ddcebd;
+            background: #ebdccb;
+            font-size: 0.9rem;
+            color: #6a5a4a;
+            position: relative;
+            z-index: 3;
+        }
+
+        footer p {
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Page Vignette Overlay -->
+    <div class="page-overlay"></div>
+
+    <!-- SVG Continuous Red-Gold String Canvas -->
+    <svg id="string-canvas">
+        <path id="golden-string" d="" fill="none" stroke="url(#stringGradient)" stroke-width="2.2" stroke-linecap="round" />
+        <defs>
+            <linearGradient id="stringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#a83232" />
+                <stop offset="50%" stop-color="#d4af37" />
+                <stop offset="100%" stop-color="#982e2e" />
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <!-- NAVIGATION BAR -->
+    <header>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#song">The Song</a></li>
+                <li><a href="#string">The String</a></li>
+                <li><a href="#metaphors">Lyric Metaphors</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#learn-more">Learn More</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- HOME SECTION -->
+    <section id="home">
+        <div class="washi-tape top-left"></div>
+        <div class="washi-tape top-right"></div>
+        
+        <h1 class="home-title">INVISIBLE STRING</h1>
+        <div class="home-tagline">“Some things are connected long before we realize it.”</div>
+        
+        <p class="home-intro">
+            Somewhere between the people we meet, the places we visit, and the moments we almost forget, there may be connections we only understand later. <em>invisible string</em> explores the quiet possibility that our past and present are not as separate as they seem.
+        </p>
+
+        <div class="hero-centerpiece">
+            <!-- Frame 1 -->
+            <div class="ts-photo-frame" style="transform: rotate(-3deg);">
+                <img src="taylor2.jpg" alt="Vintage Rose & Journal">
+                <div class="caption">Golden</div>
+            </div>
+            <!-- Frame 2 -->
+            <div class="ts-photo-frame" style="transform: rotate(2deg);">
+                <img src="taylor1.jpg" alt="Misty Forest Path">
+                <div class="caption">Invisible</div>
+            </div>
+            <!-- Frame 3 -->
+            <div class="ts-photo-frame" style="transform: rotate(-2deg);">
+                <img src="taylor3.jpg" alt="Old Journal Notes">
+                <div class="caption">String</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- THE SONG SECTION -->
+    <section id="song">
+        <h2 class="section-title">THE SONG</h2>
+        <div class="section-subtitle">memories, hindsight, & quiet reflection</div>
+
+        <div class="song-grid">
+            <!-- Metadata Box & Player -->
+            <div class="song-meta-box">
+                <div class="washi-tape top-left"></div>
+                <h3>Song Details</h3>
+                <div class="song-meta-item"><strong>Artist:</strong> Taylor Swift</div>
+                <div class="song-meta-item"><strong>Track:</strong> “invisible string”</div>
+                <div class="song-meta-item"><strong>Album:</strong> folklore</div>
+                <div class="song-meta-item"><strong>Release Date:</strong> July 24, 2020</div>
+                <div class="song-meta-item"><strong>Track No:</strong> 11 of 16</div>
+                <div class="song-meta-item"><strong>Songwriters:</strong> Taylor Swift, Aaron Dessner</div>
+                <div class="song-meta-item"><strong>Producer:</strong> Aaron Dessner</div>
+                <div class="song-meta-item"><strong>Genre:</strong> Indie folk / alternative folk</div>
+
+                <!-- Custom Audio Player -->
+                <div class="audio-player-card">
+                    <div class="audio-controls">
+                        <button class="play-btn" id="audio-play-btn" aria-label="Play song">▶</button>
+                        <div class="track-info">
+                            <div class="track-title">invisible string</div>
+                            <input type="range" id="audio-seek" class="time-slider" value="0" min="0" max="100">
+                        </div>
+                    </div>
+                    <!-- Audio Element pointing to song.mp3 -->
+                    <audio id="folklore-audio" src="song.mp3" preload="metadata"></audio>
+                </div>
+
+                <!-- Spotify Player Embed -->
+                <div class="spotify-card">
+                    <iframe style="border-radius:8px" src="https://open.spotify.com/embed/track/63O432_?utm_source=generator&theme=0" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+                </div>
+            </div>
+
+            <!-- Description Text -->
+            <div class="scrapbook-card">
+                <p style="margin-bottom: 1.5rem;">
+                    Released on July 24, 2020, “invisible string” is the eleventh track of Taylor Swift’s eighth studio album, folklore. Written by Taylor Swift and Aaron Dessner, the song explores the idea that seemingly unrelated moments, experiences, and relationships can become connected over time. Through reflections on her past, Swift presents the possibility that an unseen force may have guided her toward the life and relationships she has in the present.
+                </p>
+                <p style="margin-bottom: 1.5rem;">
+                    Rather than focusing solely on the experience of falling in love, “invisible string” examines the events that occurred before two people found each other. The song connects memories of childhood, personal experiences, past relationships, and significant places to the present. Through this perspective, experiences that once appeared random or painful acquire a different meaning when viewed in hindsight.
+                </p>
+                <p>
+                    The song’s gentle instrumentation and reflective atmosphere complement its central theme of memory and connection. Its calm sound creates a sense of warmth and nostalgia, while its narrative encourages listeners to reflect on their own experiences. Ultimately, “invisible string” suggests that the past does not exist separately from the present; instead, every experience can become part of the journey that shapes who we are and where we eventually arrive.
+                </p>
+            </div>
+        </div>
+
+        <!-- Visual Timeline -->
+        <div class="visual-timeline">
+            <div class="timeline-step">
+                <div class="timeline-node">01</div>
+                <div class="timeline-label">PAST</div>
+            </div>
+            <div class="timeline-step">
+                <div class="timeline-node">02</div>
+                <div class="timeline-label">EXPERIENCES</div>
+            </div>
+            <div class="timeline-step">
+                <div class="timeline-node">03</div>
+                <div class="timeline-label">UNCERTAINTY</div>
+            </div>
+            <div class="timeline-step">
+                <div class="timeline-node">04</div>
+                <div class="timeline-label">CONNECTION</div>
+            </div>
+            <div class="timeline-step">
+                <div class="timeline-node">05</div>
+                <div class="timeline-label">PRESENT</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- THE STRING SECTION -->
+    <section id="string">
+        <h2 class="section-title">THE STRING</h2>
+        <div class="section-subtitle">the central metaphor of fate & golden threads</div>
+
+        <div class="quote-banner">
+            <blockquote>“We do not always see the string while we are following it.”</blockquote>
+        </div>
+
+        <div class="scrapbook-card string-prose">
+            <p>
+                The string is the central metaphor of “invisible string,” representing an unseen connection that links two people across time. Unlike an ordinary string, it cannot be seen, held, or followed with certainty. Its existence is understood only through the moments it seems to connect. This makes the metaphor especially significant because the speaker does not claim to have known about the connection from the beginning. Instead, she recognizes it only after looking back at the experiences that led her to the present. The string therefore represents not only fate, but also the human tendency to find meaning in the past once the outcome of a journey has become clear.
+            </p>
+            <p>
+                The idea of an invisible thread connecting two people is closely associated with the red thread of fate, a traditional East Asian belief in which an unseen thread connects people who are destined to meet. However, the song presents its own interpretation of this idea by describing the thread as golden. Gold can symbolize something precious, valuable, enduring, and rare. By imagining the connection as a golden thread, the song suggests that the relationship is not valuable simply because it was destined to happen, but because the experiences that eventually led to it have acquired meaning. The thread becomes a symbol of something precious that has quietly existed beneath the surface of ordinary life.
+            </p>
+            <p>
+                The invisibility of the string is equally important. If the thread were visible, the speaker would always know where it was leading and would have a clear understanding of how each event in her life was connected. Because it is invisible, however, she must experience uncertainty, make mistakes, endure heartbreak, and move through life without knowing the final destination. This reflects the reality of human experience: people rarely understand the purpose of an event while they are living through it. A painful experience may initially appear meaningless, while an ordinary moment may later become significant. The invisible string represents those connections that can only be recognized through hindsight.
+            </p>
+            <p>
+                The string also changes the way the speaker understands her past. Instead of viewing her previous experiences as isolated events, she begins to see them as parts of a larger pattern. The people she once knew, the places she had been, the mistakes she had made, and the difficult moments she had endured all become connected to the person she is in the present. This does not necessarily mean that every event was deliberately planned or that every hardship had a predetermined purpose. Rather, the metaphor suggests that meaning can emerge from the way a person understands their experiences afterward. The past cannot be changed, but its place within one's story can be understood differently.
+            </p>
+            <p>
+                Most importantly, the string does not erase the difficulties that came before the present. The song acknowledges that the journey included mistakes, pain, and uncertainty. The significance of the string lies in its ability to connect those difficult experiences to growth rather than pretending that they never happened. What once seemed like a wrong turn can become part of the path that eventually leads somewhere meaningful. In this sense, the string represents continuity: the past, present, and future are not completely separate, because each experience contributes to the person one eventually becomes.
+            </p>
+            <p>
+                Ultimately, the invisible string represents the possibility that life contains connections we cannot recognize while they are happening. It connects people, memories, places, mistakes, and moments across time, allowing the speaker to look back and see a pattern that was once hidden from her. The metaphor is powerful because it leaves room for both fate and personal interpretation. Whether the connection was truly destined or simply became meaningful through hindsight is never completely answered. Instead, the song suggests that sometimes the most important connections in life are the ones we only recognize after we have already followed the thread.
+            </p>
+        </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- LYRIC METAPHORS SECTION -->
+    <section id="metaphors">
+        <h2 class="section-title">LYRIC METAPHORS</h2>
+        <div class="section-subtitle">tracing the signs, wire, gold, and journeys</div>
+
+        <div class="metaphor-card">
+            <div class="lyric-excerpt">
+                “Gave me no compasses, gave me no signs<br>
+                Were there clues I didn't see?”
+            </div>
+            <div class="metaphor-analysis">
+                Here, Taylor uses a compass as a metaphor for direction and guidance. A compass normally tells someone where to go, but she describes having no compass or signs to guide her toward the future. This represents the uncertainty of life: people rarely know which decisions, places, or experiences will eventually become important. The word “clues” transforms her memories into something resembling a mystery. Looking backward, she wonders whether there were signs of the future that she simply failed to recognize. This makes the song less about knowing that someone is destined for you and more about discovering meaning after the fact. At the time, the moments were ordinary; only later do they begin to resemble pieces of a larger picture.
+            </div>
+        </div>
+
+        <div class="metaphor-card">
+            <div class="lyric-excerpt">
+                “Something wrapped all of my past mistakes in barbed wire<br>
+                Chains around my demons”
+            </div>
+            <div class="metaphor-analysis">
+                These metaphors represent Taylor's complicated relationship with her past. “Past mistakes” are compared to something surrounded by barbed wire, which suggests pain, danger, and separation. Barbed wire prevents people from easily reaching what lies behind it, so the image can represent putting painful experiences behind a boundary rather than allowing them to continue controlling the present. The “demons” represent inner struggles such as regret, emotional pain, and difficult memories, while the chains symbolize gaining control over them. Together, these images show that healing does not necessarily mean erasing the past. Instead, it means learning to live beyond it. The metaphor becomes especially powerful because it appears before the “thread of gold”: the painful parts of her past remain part of her story, but they no longer determine where her story ends.
+            </div>
+        </div>
+
+        <div class="metaphor-card">
+            <div class="lyric-excerpt">
+                “One single thread of gold tied me to you”
+            </div>
+            <div class="metaphor-analysis">
+                The “thread of gold” is the most important metaphor in the song because it represents an invisible connection between two people whose lives once existed separately. A thread is thin and almost fragile, yet it can connect two distant points. By describing the thread as gold, Taylor gives the connection a sense of value, beauty, and rarity. The metaphor also suggests that the relationship did not simply begin when the two people met; instead, their separate experiences had already been forming a path toward that moment. The word “single” further emphasizes how one connection can stand out among countless events in a person's life. In this sense, the golden thread becomes a symbol of love, fate, and the connections that only become recognizable through hindsight.
+            </div>
+        </div>
+
+        <div class="metaphor-card">
+            <div class="lyric-excerpt">
+                “Hell was the journey but it brought me heaven”
+            </div>
+            <div class="metaphor-analysis">
+                This is perhaps the song's clearest example of contrast and metaphor. “Hell” represents the difficult parts of Taylor's journey—heartbreak, mistakes, disappointment, and emotional struggles—while “heaven” represents the happiness and peace she eventually finds. The line does not necessarily suggest that the painful experiences were good or that they happened for a specific purpose. Instead, it expresses the idea that a difficult journey can eventually lead to something meaningful. The contrast between “hell” and “heaven” also summarizes the entire song: the past and present may feel completely different, yet one led to the other. The journey was painful, but when viewed from the present, Taylor can appreciate where it ultimately brought her.
+            </div>
+        </div>
+
+        <div class="bigger-meaning-card">
+            <h3>THE BIGGER MEANING</h3>
+            <div class="metaphor-analysis" style="text-align: center; max-width: 800px; margin: 0 auto;">
+                Together, these metaphors create a single narrative about hindsight, growth, and connection. The compass represents not knowing where life is taking you; the clues represent recognizing patterns only after they have happened; the barbed wire and chains represent learning to separate yourself from past pain; and the golden thread represents the connection that remains throughout the journey. Finally, “hell” and “heaven” show the distance between where she once was and where she eventually arrived. The song therefore presents the past not as something that needs to be forgotten, but as something that can be understood differently with time. The invisible string is ultimately a metaphor for the possibility that all the seemingly unrelated moments of our lives can become connected when we finally look back and see the whole story.
+            </div>
+        </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ABOUT SECTION -->
+    <section id="about">
+        <h2 class="section-title">ABOUT</h2>
+        <div class="section-subtitle">personal reflections & personal notes</div>
+
+        <div class="about-container">
+            <div class="washi-tape top-left"></div>
+            <div class="washi-tape top-right"></div>
+            <div class="about-text">
+                <p>
+                    There is something about “invisible string” that makes you want to look back at your own life. At first, it sounds like a song about two people finding their way to each other. But the more you listen to it, the more it feels like it is also about everything that happened before that moment—the people you met, the places you went, the mistakes you made, and the memories you carried along the way.
+                </p>
+                <p>
+                    What makes the idea of the invisible string so interesting is that you cannot actually see it while you are living through those moments. You do not know which experiences will matter later or where they might lead you. Some things simply happen and become memories. Then, years later, you might look back and realize that something you once thought was insignificant had a place in the bigger picture after all...
+                </p>
+                <p>
+                    That is what I find most meaningful about the song. It does not make the past seem perfect. There are still mistakes, pain, and moments that were difficult to understand. Instead, it shows how those experiences can become part of the person we eventually grow into. Sometimes, understanding comes much later than the experience itself.
+                </p>
+                <p>
+                    This website is my way of exploring that idea through the song, its lyrics, and the meaning behind the invisible string. More than anything, I hope it gives you a reason to think about your own. Maybe there is a person, a place, or even a moment from your past that makes a little more sense now than it did back then.
+                </p>
+                <p style="font-style: italic; font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; color: #8b3a3a; text-align: center; margin-top: 2rem;">
+                    “Maybe that is the strange thing about life: we do not always see the string while we are following it.”
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- LEARN MORE SECTION -->
+    <section id="learn-more">
+        <h2 class="section-title">LEARN MORE</h2>
+        <div class="section-subtitle">trivia, reflections, & the thread flow</div>
+
+        <div class="learn-grid">
+            <!-- Trivia Card -->
+            <div class="scrapbook-card">
+                <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">DID YOU KNOW?</h3>
+                <ul style="padding-left: 1.2rem; font-size: 0.95rem; line-height: 1.8; color: #4a3e32;">
+                    <li style="margin-bottom: 0.8rem;"><em>folklore</em> was crafted in isolation during the spring/summer of 2020 and surprise-released with less than 24 hours' notice.</li>
+                    <li style="margin-bottom: 0.8rem;">The song subtly references Centennial Park in Nashville, where Swift spent time in her teenage years.</li>
+                    <li style="margin-bottom: 0.8rem;">Aaron Dessner composed the instrumental acoustic guitar track in Hudson Valley before sending it to Taylor, who wrote the lyrics in a single afternoon.</li>
+                </ul>
+            </div>
+
+            <!-- Interactive Poll -->
+            <div class="interactive-poll">
+                <h3 style="font-size: 1.4rem; color: #3b2d21;">FATE OR COINCIDENCE?</h3>
+                <p style="font-size: 0.95rem; color: #5a4b3c; margin-top: 0.5rem;">
+                    “Do you think the important people and moments in our lives are connected by fate, or do we simply find meaning in them afterward?”
+                </p>
+                <div class="poll-options">
+                    <button class="poll-btn" onclick="vote('Fate')">FATE</button>
+                    <button class="poll-btn" onclick="vote('Coincidence')">COINCIDENCE</button>
+                    <button class="poll-btn" onclick="vote('A Little of Both')">A LITTLE OF BOTH</button>
+                </div>
+                <div id="poll-response" class="poll-result"></div>
+            </div>
+        </div>
+
+        <!-- FAN THOUGHTS -->
+        <h3 style="text-align: center; font-size: 1.8rem; margin-top: 2rem; color: #2c221a;">FAN THOUGHTS</h3>
+        <p style="text-align: center; font-size: 0.9rem; font-style: italic; color: #6a5a4a;">fictional journal entries inspired by the song</p>
+        
+        <div class="journal-entries">
+            <div class="journal-card">
+                <p>““I used to think my past heartbreaks were wasted years. This song made me realize that those painful detours were simply pulling the string toward where I was always meant to stand.”</p>
+                <div class="journal-author">— Elena,24</div>
+            </div>
+            <div class="journal-card">
+                <p>“My husband and I recently realized we were at the same small coffee shop in 2014, three years before we actually met. We were sitting at adjacent tables without knowing it”</p>
+                <div class="journal-author">— Marcus, 30</div>
+            </div>
+            <div class="journal-card">
+                <p>“The line about barbed wire and chains hits so close to home. Growth isn't erasing your wounds; it's placing a healthy boundary around them so they no longer hurt your present”</p>
+                <div class="journal-author">— Sophia, 27</div>
+            </div>
+        </div>
+
+        <!-- THE THREAD FLOW -->
+        <div class="thread-flow">
+            <span class="thread-node">PAST</span>
+            <span class="thread-arrow">➔</span>
+            <span class="thread-node">MEMORY</span>
+            <span class="thread-arrow">➔</span>
+            <span class="thread-node">MISTAKES</span>
+            <span class="thread-arrow">➔</span>
+            <span class="thread-node">GROWTH</span>
+            <span class="thread-arrow">➔</span>
+            <span class="thread-node">CONNECTION</span>
+            <span class="thread-arrow">➔</span>
+            <span class="thread-node">PRESENT</span>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>invisible string — folklore digital scrapbook</p>
+        <p style="font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.8;">Inspired by Taylor Swift's folklore. Crafted with care & nostalgia.</p>
+    </footer>
+
+    <!-- JAVASCRIPT FOR AUDIO, POLL, AND SVG STRING ANIMATION -->
+    <script>
+        // Custom Audio Player Setup
+        const audio = document.getElementById('folklore-audio');
+        const playBtn = document.getElementById('audio-play-btn');
+        const seek = document.getElementById('audio-seek');
+
+        if (playBtn && audio) {
+            playBtn.addEventListener('click', () => {
+                if (audio.paused) {
+                    audio.play();
+                    playBtn.textContent = '❚❚';
+                } else {
+                    audio.pause();
+                    playBtn.textContent = '▶';
+                }
+            });
+
+            audio.addEventListener('timeupdate', () => {
+                if (audio.duration) {
+                    seek.value = (audio.currentTime / audio.duration) * 100;
+                }
+            });
+
+            seek.addEventListener('input', () => {
+                if (audio.duration) {
+                    audio.currentTime = (seek.value / 100) * audio.duration;
+                }
+            });
+        }
+
+        // Interactive Poll Response
+        function vote(option) {
+            const res = document.getElementById('poll-response');
+            let text = "";
+            if (option === 'Fate') {
+                text = "Thank you for sharing. 32% of readers believe that unseen threads guide us from the start.";
+            } else if (option === 'Coincidence') {
+                text = "Thank you for sharing. 18% of readers feel that meaning is something we craft entirely in hindsight.";
+            } else {
+                text = "Thank you for sharing. 50% of readers agree that life is a delicate blend of coincidence and quiet destiny.";
+            }
+            res.style.display = 'block';
+            res.textContent = text;
+        }
+
+        // Dynamic Golden String SVG Path Calculation Across Sections
+        function updateGoldenString() {
+            const svg = document.getElementById('string-canvas');
+            const path = document.getElementById('golden-string');
+            const bodyHeight = document.documentElement.scrollHeight;
+            const bodyWidth = document.body.clientWidth;
+
+            svg.setAttribute('height', bodyHeight);
+            svg.setAttribute('width', bodyWidth);
+
+            // Connect section anchors smoothly
+            const sections = document.querySelectorAll('section');
+            let points = [];
+
+            // Add top anchor
+            points.push({ x: bodyWidth * 0.1, y: 150 });
+
+            sections.forEach((sec, idx) => {
+                const rect = sec.getBoundingClientRect();
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const absoluteTop = rect.top + scrollTop;
+
+                if (idx % 2 === 0) {
+                    points.push({ x: bodyWidth * 0.85, y: absoluteTop + rect.height * 0.25 });
+                    points.push({ x: bodyWidth * 0.15, y: absoluteTop + rect.height * 0.75 });
+                } else {
+                    points.push({ x: bodyWidth * 0.2, y: absoluteTop + rect.height * 0.3 });
+                    points.push({ x: bodyWidth * 0.8, y: absoluteTop + rect.height * 0.7 });
+                }
+            });
+
+            // Add bottom anchor
+            points.push({ x: bodyWidth * 0.5, y: bodyHeight - 100 });
+
+            // Generate smooth curve string path
+            let d = `M ${points[0].x} ${points[0].y}`;
+            for (let i = 1; i < points.length - 1; i++) {
+                const xc = (points[i].x + points[i + 1].x) / 2;
+                const yc = (points[i].y + points[i + 1].y) / 2;
+                d += ` Q ${points[i].x} ${points[i].y}, ${xc} ${yc}`;
+            }
+            path.setAttribute('d', d);
+        }
+
+        window.addEventListener('load', updateGoldenString);
+        window.addEventListener('resize', updateGoldenString);
+    </script>
+</body>
+</html>
